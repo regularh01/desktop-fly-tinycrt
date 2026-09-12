@@ -8,4 +8,5 @@ nohup.out
 *.app/
 *.exe
 windows/dist/
+windows/data/
 DesktopFly-Windows-x64.exe
