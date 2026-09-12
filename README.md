@@ -33,13 +33,13 @@ to stimulate it.
 
 | 플랫폼 | 패키지 | 다운로드 링크 | 실행 방법 |
 | :--- | :--- | :--- | :--- |
-| **Windows (추천)** | 단일 무설치 포터블 EXE | [🪟 **DesktopFly-Windows-x64.exe**](https://github.com/regularh01/desktop-fly-tinycrt/releases/download/v1.2.0-tinycrt/DesktopFly-Windows-x64.exe) | **더블 클릭 즉시 실행** (Node.js 불필요) |
-| **macOS (추천)** | DMG 디스크 이미지 | [🍏 **DesktopFly-macOS.dmg**](https://github.com/regularh01/desktop-fly-tinycrt/releases/download/v1.2.0-tinycrt/DesktopFly-macOS.dmg) | 더블 클릭 후 `Applications` 폴더로 드래그 |
+| **macOS (강력 추천)** | 원클릭 PKG 인스톨러 | [🍏 **DesktopFly-macOS-Installer.pkg**](https://github.com/regularh01/desktop-fly-tinycrt/releases/download/v1.2.0-tinycrt/DesktopFly-macOS-Installer.pkg) | **더블 클릭 후 마법사 설치** (게이트키퍼 자동 통과) |
+| **Windows (강력 추천)** | 단일 무설치 포터블 EXE | [🪟 **DesktopFly-Windows-x64.exe**](https://github.com/regularh01/desktop-fly-tinycrt/releases/download/v1.2.0-tinycrt/DesktopFly-Windows-x64.exe) | **더블 클릭 즉시 실행** (Node.js 불필요) |
+| **macOS** | DMG 디스크 이미지 | [🍏 **DesktopFly-macOS.dmg**](https://github.com/regularh01/desktop-fly-tinycrt/releases/download/v1.2.0-tinycrt/DesktopFly-macOS.dmg) | 더블 클릭 후 `Applications` 폴더로 드래그 |
 | **macOS** | 정식 앱 번들 ZIP | [🍏 **DesktopFly-macOS-App.zip**](https://github.com/regularh01/desktop-fly-tinycrt/releases/download/v1.2.0-tinycrt/DesktopFly-macOS-App.zip) | 압축 해제 후 `DesktopFly.app` 실행 |
-| **Windows** | 소스 런처 ZIP | [🪟 **DesktopFly-Windows-v1.2.0.zip**](https://github.com/regularh01/desktop-fly-tinycrt/releases/download/v1.2.0-tinycrt/DesktopFly-Windows-v1.2.0.zip) | 압축 해제 후 `run.bat` 더블 클릭 (Node.js 필요) |
 
-> 💡 **최초 실행 팁**:  
-> - **macOS**: 최초 1회 실행 시 앱을 **마우스 우클릭(Control+클릭) → [열기]**를 선택하시면 이후부터는 일반 앱처럼 더블 클릭만으로 바로 열립니다. (또는 DMG 안의 '원클릭 바로실행' 더블 클릭)  
+> 💡 **실행 팁**:  
+> - **macOS**: `DesktopFly-macOS-Installer.pkg`를 받으시면 시스템 인스톨러가 보안 격리를 자동 해제하여 설치하므로 가장 안전하고 편리합니다.  
 > - **Windows**: 최초 실행 시 파란색 SmartScreen 창이 뜨면 **[추가 정보] → [실행]**을 클릭하시면 됩니다.
 
 > 최신 릴리스 상세: [GitHub Releases (v1.2.0-tinycrt)](https://github.com/regularh01/desktop-fly-tinycrt/releases/tag/v1.2.0-tinycrt)
