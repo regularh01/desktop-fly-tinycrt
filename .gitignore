@@ -6,3 +6,6 @@ nohup.out
 *.dmg
 *.zip
 *.app/
+*.exe
+windows/dist/
+DesktopFly-Windows-x64.exe

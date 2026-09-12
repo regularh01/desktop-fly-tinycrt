@@ -10,7 +10,27 @@
     "behaviortest": "node test/behaviortest.js",
     "locomotortest": "node test/locomotortest.js",
     "tinycrttest": "node test/tinycrttest.js",
-    "test": "node test/simtest.js && node test/behaviortest.js && node test/locomotortest.js && node test/tinycrttest.js"
+    "test": "node test/simtest.js && node test/behaviortest.js && node test/locomotortest.js && node test/tinycrttest.js",
+    "dist": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.regularh01.desktopfly",
+    "productName": "DesktopFly",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": ["nsis", "portable"]
+    },
+    "files": [
+      "main.js",
+      "preload.mjs",
+      "renderer/**/*",
+      "src/**/*",
+      "assets/**/*",
+      "data/**/*",
+      "package.json"
+    ]
   },
   "license": "MIT",
   "dependencies": {
@@ -18,6 +38,7 @@
     "koffi": "^2.9.0"
   },
   "devDependencies": {
-    "electron": "^32.2.0"
+    "electron": "^32.2.0",
+    "electron-builder": "^26.15.3"
   }
 }
