@@ -92,8 +92,9 @@ final class TinyCRTSheet {
     private var frames: [Int: [CGImage]] = [:]
     
     private init() {
-        // Try multiple paths: relative to executable, relative to working dir, or direct asset path
+        let exeDir = URL(fileURLWithPath: CommandLine.arguments[0]).resolvingSymlinksInPath().deletingLastPathComponent()
         let candidates = [
+            exeDir.appendingPathComponent("assets/tiny-crt/spritesheet.webp"),
             Bundle.main.resourcePath.map { URL(fileURLWithPath: $0).appendingPathComponent("assets/tiny-crt/spritesheet.webp") },
             URL(fileURLWithPath: "assets/tiny-crt/spritesheet.webp"),
             URL(fileURLWithPath: "/Users/jgh/Project/desktop-fly/assets/tiny-crt/spritesheet.webp")
