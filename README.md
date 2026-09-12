@@ -27,6 +27,17 @@ markers are the Giant Fibers — the escape command neurons. Click any region
 to stimulate it.
 </sub></p>
 
+## 🚀 Download & Run (다운로드 및 즉시 실행)
+
+별도의 개발 도구 설치 없이 다운로드 후 바로 실행할 수 있습니다:
+
+| 플랫폼 | 다운로드 | 실행 방법 |
+| :--- | :--- | :--- |
+| **macOS** | [🍏 **DesktopFly-macOS-v1.2.0.zip**](https://github.com/regularh01/desktop-fly-tinycrt/releases/download/v1.2.0-tinycrt/DesktopFly-macOS-v1.2.0.zip) | 압축 해제 후 `run.command` 더블 클릭 |
+| **Windows** | [🪟 **DesktopFly-Windows-v1.2.0.zip**](https://github.com/regularh01/desktop-fly-tinycrt/releases/download/v1.2.0-tinycrt/DesktopFly-Windows-v1.2.0.zip) | 압축 해제 후 `run.bat` 더블 클릭 (Node.js 필요) |
+
+> 최신 릴리스 페이지: [GitHub Releases (v1.2.0-tinycrt)](https://github.com/regularh01/desktop-fly-tinycrt/releases/tag/v1.2.0-tinycrt)
+
 ## Changelog
 
 ### 1.1.0 — 2026-09-05
