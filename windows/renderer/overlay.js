@@ -7,7 +7,7 @@
 import * as THREE from '../node_modules/three/build/three.module.js';
 import { LIFSim, SpikeBus, SimulationClock } from '../src/sim.js';
 import { SignalBuilder } from '../src/signals.js';
-import { Fly, SHADOWS_ENABLED } from '../src/flymodel.js';
+import { Fly, SHADOWS_ENABLED, BODY_FORM } from '../src/flymodel.js';
 import { clampf, rnd, lag } from '../src/util.js';
 
 const api = window.flyAPI;
@@ -167,7 +167,10 @@ function removeFly() {
 function scareAll() {
   loomOverride = 0.6;                     // real stimulus into the real circuit for fly #1
   for (const fly of flies.slice(1)) {
-    if (fly.state !== 'flying') fly.startFlight(bounds);
+    if (fly.state !== 'flying') {
+      fly.triggerVisualScare?.();
+      fly.startFlight(bounds);
+    }
   }
 }
 
@@ -330,6 +333,11 @@ api.onCommand((c) => {
     case 'scareAll': scareAll(); break;
     case 'flyToNextDisplay': flyToNextDisplay(); break;
     case 'stim': stimulateGroup(c.group); break;
+    case 'toggleBody': {
+      BODY_FORM.current = BODY_FORM.current === 'tinyCRT' ? 'fly' : 'tinyCRT';
+      for (const fly of flies) fly.swapBody();
+      break;
+    }
     default: break;
   }
 });

@@ -5,10 +5,13 @@ import { resetRandom } from './random.js';
 import { loadBrainData } from '../src/data.js';
 import { LocomotorSim, validateLocomotorCircuit } from '../src/locomotor.js';
 import { SixLegDynamics, makeLegMotorCommand } from '../src/legdynamics.js';
-import { Fly, makeSignals } from '../src/flymodel.js';
+import { Fly, makeSignals, BODY_FORM } from '../src/flymodel.js';
 import { LIFSim, SimulationClock } from '../src/sim.js';
 import { SignalBuilder } from '../src/signals.js';
 import * as THREE from '../node_modules/three/build/three.module.js';
+
+const targetForm = process.argv.includes('--fly') ? 'fly' : 'tinyCRT';
+BODY_FORM.current = targetForm;
 
 const data = loadBrainData();
 assert(data?.locomotor, 'shipped MaleCNS dataset is required');
@@ -21,6 +24,76 @@ function check(name, run) {
 }
 const zeros = () => Array.from({ length: 6 }, makeLegMotorCommand);
 const amplitude = (commands) => commands.flatMap(Object.values).reduce((sum, x) => sum + Math.abs(x), 0);
+
+// 1. Tiny CRT Leg Geometry Equivalence Check
+check('TinyCRT leg geometry exactly matches fly model', () => {
+  BODY_FORM.current = 'fly';
+  const flyLegs = new Fly({ x: 0, y: 0 }).model.legs;
+  BODY_FORM.current = 'tinyCRT';
+  const crtLegs = new Fly({ x: 0, y: 0 }).model.legs;
+  assert.equal(flyLegs.length, crtLegs.length);
+  assert.equal(flyLegs.length, 6);
+  for (let i = 0; i < flyLegs.length; i++) {
+    const g1 = flyLegs[i].geometry;
+    const g2 = crtLegs[i].geometry;
+    for (const key of ['attachX', 'attachY', 'attachZ', 'baseYaw', 'side', 'femur', 'tibia', 'tarsus']) {
+      assert(Math.abs(g1[key] - g2[key]) < 1e-6, `mismatch on leg ${i} ${key}: ${g1[key]} vs ${g2[key]}`);
+    }
+  }
+  BODY_FORM.current = targetForm;
+  return 'all 6 kinematic specs and symmetry transform match';
+});
+
+// 2. Fly and TinyCRT Mechanics Equivalence across Straight, Turn, Backward, Rest
+check('Fly and TinyCRT produce identical kinematics across all scenarios', () => {
+  function runScenario(name, form, { forwardHz = 40, leftHz = 0, rightHz = 0, backwardHz = 0, onset = 0 } = {}) {
+    resetRandom(`cmp_${name}`);
+    BODY_FORM.current = form;
+    const f = new Fly({ x: 0, y: 0 });
+    const dyn = new SixLegDynamics(f.model.legs.map((l) => l.geometry));
+    const cord = new LocomotorSim(data.locomotor);
+    for (const side of ['left', 'right']) {
+      cord.setDescending('DNp09', side, forwardHz);
+    }
+    let forward = 0;
+    let yaw = 0;
+    for (let i = 0; i < 480; i++) {
+      if (i * 0.01 >= onset) {
+        for (const side of ['left', 'right']) {
+          for (const type of ['DNa01', 'DNa02']) {
+            cord.setDescending(type, side, side === 'left' ? leftHz : rightHz);
+          }
+          cord.setDescending('MDN', side, backwardHz);
+        }
+      }
+      cord.feedback = dyn.feedback;
+      cord.step(10);
+      const motion = dyn.advance(cord.commands, 1 / 100);
+      forward += motion.forward;
+      yaw += motion.yaw;
+    }
+    return { forward, yaw, spikes: cord.totalSpikes };
+  }
+
+  const scenarios = [
+    ['straight', { forwardHz: 40 }],
+    ['left_turn', { forwardHz: 30, leftHz: 70, onset: 1.5 }],
+    ['right_turn', { forwardHz: 30, rightHz: 70, onset: 1.5 }],
+    ['backward', { forwardHz: 0, backwardHz: 70 }],
+    ['rest', { forwardHz: 0 }]
+  ];
+
+  for (const [name, opts] of scenarios) {
+    const fRes = runScenario(name, 'fly', opts);
+    const cRes = runScenario(name, 'tinyCRT', opts);
+    assert(Math.abs(fRes.forward - cRes.forward) < 1e-6, `${name} forward diff: ${fRes.forward} vs ${cRes.forward}`);
+    assert(Math.abs(fRes.yaw - cRes.yaw) < 1e-6, `${name} yaw diff: ${fRes.yaw} vs ${cRes.yaw}`);
+    assert.equal(fRes.spikes, cRes.spikes, `${name} spikes mismatch: ${fRes.spikes} vs ${cRes.spikes}`);
+  }
+
+  BODY_FORM.current = targetForm;
+  return 'straight, left/right turn, backward, rest: forward, yaw and spikes 100% match';
+});
 
 check('dataset validates and excludes invalid graph indices', () => {
   assert(validateLocomotorCircuit(data.locomotor));

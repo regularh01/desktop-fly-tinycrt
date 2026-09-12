@@ -50,13 +50,15 @@ let SWING_DUR: CGFloat = 0.035
 enum BodyForm: String {
     case fly = "fruit fly"
     case beetle = "stag beetle"
+    case tinyCRT = "tiny CRT"
 }
-var BODY_FORM: BodyForm = .fly
+var BODY_FORM: BodyForm = .tinyCRT
 
 func buildBody() -> FlyModel {
     switch BODY_FORM {
-    case .fly:    return buildFlyModel()
-    case .beetle: return buildBeetleModel()
+    case .fly:     return buildFlyModel()
+    case .beetle:  return buildBeetleModel()
+    case .tinyCRT: return buildTinyCRTModel()
     }
 }
 
@@ -175,6 +177,8 @@ struct FlyModel {
     var elytraR: SCNNode? = nil
     /// Body-specific wing clearance; the beetle retains its existing stroke.
     var wingFlightSpread: CGFloat = 0.625
+    /// Custom skin frame/state updater hook
+    var onUpdate: ((Fly, CGFloat) -> Void)? = nil
 }
 
 func buildLeg(attach: SCNVector3, baseYaw: CGFloat, swingSign: CGFloat, phase: CGFloat,
@@ -381,6 +385,9 @@ final class Fly {
     var gaitPhase: CGFloat = rnd(0...1)
     var time: CGFloat = rnd(0...100)
     var scareCooldown: CGFloat = 0
+    var isEscaping: Bool = false
+    var visualScare: Bool = false
+    func triggerVisualScare() { visualScare = true }
     var dartCooldown: CGFloat = 0
     var backwardTimer: CGFloat = 0
     /// Radians of body saccade not yet spent, and the rate it is spent at.
@@ -423,6 +430,7 @@ final class Fly {
     /// Rebuild the body in the current `BODY_FORM`, in place. Behavior state
     /// (position, gait phase, flight, ledge) is untouched — only geometry swaps.
     func swapBody() {
+        visualScare = false
         let old = model.root
         let parent = old.parent
         old.removeFromParentNode()
@@ -448,6 +456,7 @@ final class Fly {
     func startFlight(bounds: CGSize, awayFrom: CGPoint? = nil, escape: Bool = false,
                      effort: CGFloat? = nil) {
         setState(.flying)
+        isEscaping = escape
         ledge = nil
         ledgeHeading = nil
         turnTarget = nil
@@ -491,6 +500,7 @@ final class Fly {
 
     private func land() {
         setState(.idle)
+        isEscaping = false
         stateTimer = rnd(0.3...0.8)
         speed = 0
         alt = 0
@@ -601,6 +611,7 @@ final class Fly {
                 // legacy distance-based fear (extra, brainless flies)
                 let mouseDist = hypot(m.x - pos.x, m.y - pos.y)
                 if mouseDist < SCARE_RADIUS {
+                    triggerVisualScare()
                     startFlight(bounds: bounds, awayFrom: m)
                 } else if mouseDist < NERVOUS_RADIUS && state != .walking {
                     setState(.walking)
@@ -639,6 +650,8 @@ final class Fly {
                                          : (1 + 0.03 * sin(time * 3.0))
         model.abdomen.scale = SCNVector3(0.9, 1.5, 0.75 * breathe)
         syncNode()
+        model.onUpdate?(self, dt)
+        visualScare = false
     }
 
     private func setState(_ s: State) {

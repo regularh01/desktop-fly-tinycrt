@@ -2,10 +2,15 @@
   <img src="assets/fly.png" width="340" alt="DesktopFly — a 3D fruit fly">
 </p>
 
-<h1 align="center">DesktopFly 🪰</h1>
+<h1 align="center">DesktopFly 🪰 (with Tiny CRT Skin 🖥️)</h1>
+
+> [!NOTE]
+> **About this Custom Fork / Project:**  
+> 이 프로젝트는 [DenisSergeevitch/desktop-fly](https://github.com/DenisSergeevitch/desktop-fly) 오픈 소스 저장소를 클론하여 커스텀 개발한 프로젝트입니다.  
+> 원본의 **FlyWire v783** 및 **MaleCNS v1.0** 기반 뇌 신경망 시뮬레이션과 운동 역학(Locomotor Mechanics)을 100% 보존하면서, 2D 레트로 픽셀 애니메이션 캐릭터인 **Tiny CRT** 스킨을 이식하고 macOS(SceneKit) 및 Windows(Electron / Three.js) 양 플랫폼에서 완벽하게 동작하도록 확장했습니다.
 
 <p align="center">
-A 3D fruit fly that lives on your macOS desktop, with spiking simulations
+A 3D fruit fly & retro Tiny CRT pet that lives on your desktop, with spiking simulations
 built from <a href="https://codex.flywire.ai">FlyWire</a> brain wiring and
 the <a href="https://male-cns.janelia.org/">MaleCNS</a> brain-to-leg network.
 It combines identified neural circuits with modeled senses, joints and behavior.

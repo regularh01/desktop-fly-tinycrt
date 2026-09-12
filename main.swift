@@ -741,6 +741,7 @@ final class Coordinator: NSObject, SCNSceneRendererDelegate {
         enqueue { c in
             c.loomOverride = 0.6   // real stimulus into the real circuit for fly #1
             for fly in c.flies.dropFirst() where fly.state != .flying {
+                fly.triggerVisualScare()
                 fly.startFlight(bounds: c.bounds)
             }
         }
@@ -1061,7 +1062,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.title = "🪰"
+        statusItem.button?.title = requestedBody == .tinyCRT ? "🖥️" : (requestedBody == .beetle ? "🪲" : "🪰")
         let menu = NSMenu()
         menu.addItem(withTitle: "Desktop Fly", action: nil, keyEquivalent: "")
         menu.addItem(withTitle: dataInfo, action: nil, keyEquivalent: "")
@@ -1127,13 +1128,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func toggleBody() {
         // BODY_FORM itself is only ever mutated on the render thread (see the
         // threading model); the menu tracks what it asked for, for the label.
-        requestedBody = requestedBody == .beetle ? .fly : .beetle
+        switch requestedBody {
+        case .tinyCRT: requestedBody = .fly
+        case .fly:     requestedBody = .beetle
+        case .beetle:  requestedBody = .tinyCRT
+        }
         coordinator.setBodyForm(requestedBody)
         refreshBodyItem()
     }
     private func refreshBodyItem() {
-        // the item offers the OTHER form, so it reads as an action
-        bodyItem?.title = requestedBody == .beetle ? "Body: Fruit Fly" : "Body: Stag Beetle"
+        switch requestedBody {
+        case .tinyCRT:
+            bodyItem?.title = "Skin: Tiny CRT (Click for Fly)"
+            statusItem.button?.title = "🖥️"
+        case .fly:
+            bodyItem?.title = "Skin: Fruit Fly (Click for Beetle)"
+            statusItem.button?.title = "🪰"
+        case .beetle:
+            bodyItem?.title = "Skin: Stag Beetle (Click for CRT)"
+            statusItem.button?.title = "🪲"
+        }
     }
 }
 
@@ -1142,6 +1156,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 let args = CommandLine.arguments
 if let i = args.firstIndex(of: "--snapshot") {
     if args.contains("--beetle") { BODY_FORM = .beetle }
+    else if args.contains("--fly") { BODY_FORM = .fly }
+    else if args.contains("--tinycrt") { BODY_FORM = .tinyCRT }
     runSnapshot(path: args.count > i + 1 ? args[i + 1] : "preview.png",
                 topDown: args.contains("--top"), flying: args.contains("--flying"), walking: args.contains("--walking"))
     exit(0)
@@ -1154,9 +1170,19 @@ if args.contains("--simtest") {
     runSimtest()
 }
 if args.contains("--behaviortest") {
+    if args.contains("--tinycrt") {
+        BODY_FORM = .tinyCRT
+    } else {
+        BODY_FORM = .fly
+    }
     runBehaviorTest()
 }
 if args.contains("--locomotortest") {
+    if args.contains("--tinycrt") {
+        BODY_FORM = .tinyCRT
+    } else {
+        BODY_FORM = .fly
+    }
     exit(runLocomotorTests() ? 0 : 1)
 }
 

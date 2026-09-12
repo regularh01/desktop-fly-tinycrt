@@ -8,8 +8,9 @@
     "start": "electron .",
     "simtest": "node test/simtest.js",
     "behaviortest": "node test/behaviortest.js",
-    "test": "node test/simtest.js && node test/behaviortest.js && node test/locomotortest.js",
-    "locomotortest": "node test/locomotortest.js"
+    "locomotortest": "node test/locomotortest.js",
+    "tinycrttest": "node test/tinycrttest.js",
+    "test": "node test/simtest.js && node test/behaviortest.js && node test/locomotortest.js && node test/tinycrttest.js"
   },
   "license": "MIT",
   "dependencies": {

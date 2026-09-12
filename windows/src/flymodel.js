@@ -18,6 +18,7 @@ import * as THREE from '../node_modules/three/build/three.module.js';
 import { rnd, clampf, angleDiff, smoothstep, lag, TUNED_HZ } from './util.js';
 import { makeSignals } from './sim.js';
 import { LegDynamics, SixLegDynamics } from './legdynamics.js';
+import { buildTinyCRTModel } from './tinycrtmodel.js';
 
 export const SHADOWS_ENABLED = true;
 export const FLY_SCALE = 1.15;
@@ -290,11 +291,20 @@ export function buildFlyModel() {
   return { root, legs, foldedWings, blurWingL: bl, blurWingR: br, abdomen, wingFlightSpread: 1.1 };
 }
 
+export const BODY_FORM = { current: 'tinyCRT' };
+
+export function buildBody() {
+  if (BODY_FORM.current === 'tinyCRT') {
+    return buildTinyCRTModel(buildLeg, wingMesh);
+  }
+  return buildFlyModel();
+}
+
 // MARK: - Behavior
 
 export class Fly {
   constructor(p) {
-    this.model = buildFlyModel();
+    this.model = buildBody();
     this.legDynamics = new SixLegDynamics(this.model.legs.map((leg) => leg.geometry));
     const standing = this.legDynamics.feedback;
     this.model.legs.forEach((leg, i) => leg.apply(standing[i]));
@@ -342,11 +352,39 @@ export class Fly {
     this.pitch = 0;            // body pitch while climbing/descending
     this.flapPhase = 0;
     this.wingRaise = 0;        // grounded threat posture (escape-DN driven)
+    this.isEscaping = false;
+    this.visualScare = false;
     this.brainLive = false;
     this.liveArousal = 0;
     this.liveWing = 0;
 
     this.syncNode();
+  }
+
+  swapBody() {
+    this.visualScare = false;
+    const old = this.model.root;
+    const parent = old.parent;
+    if (parent) parent.remove(old);
+    this.model = buildBody();
+    this.legDynamics = new SixLegDynamics(this.model.legs.map((leg) => leg.geometry));
+    const standing = this.legDynamics.feedback;
+    this.model.legs.forEach((leg, i) => leg.apply(standing[i]));
+    this.motorWalking = false;
+    this.renderedLegState = null;
+    this.renderedMotorControl = false;
+    this.sensedLegFeedback = [];
+    this.model.root.position.copy(old.position);
+    this.model.root.scale.copy(old.scale);
+    this.model.root.rotation.copy(old.rotation);
+    if (this.model.blurWingL) this.model.blurWingL.visible = this.state === 'flying';
+    if (this.model.blurWingR) this.model.blurWingR.visible = this.state === 'flying';
+    if (parent) parent.add(this.model.root);
+    this.syncNode();
+  }
+
+  triggerVisualScare() {
+    this.visualScare = true;
   }
 
   get node() { return this.model.root; }
@@ -383,6 +421,7 @@ export class Fly {
 
   startFlight(bounds, { awayFrom = null, escape = false, effort = null, target: forced = null } = {}) {
     this.setState('flying');
+    this.isEscaping = Boolean(escape);
     this.ledge = null;
     this.ledgeHeading = null;
     this.turnTarget = null;
@@ -432,6 +471,7 @@ export class Fly {
 
   land() {
     this.setState('idle');
+    this.isEscaping = false;
     this.stateTimer = rnd(0.3, 0.8);
     this.speed = 0;
     this.alt = 0;
@@ -546,6 +586,7 @@ export class Fly {
         // legacy distance-based fear (extra, brainless flies)
         const mouseDist = Math.hypot(mouse.x - this.pos.x, mouse.y - this.pos.y);
         if (mouseDist < SCARE_RADIUS) {
+          this.triggerVisualScare();
           this.startFlight(bounds, { awayFrom: mouse });
         } else if (mouseDist < NERVOUS_RADIUS && this.state !== 'walking') {
           this.setState('walking');
@@ -586,6 +627,8 @@ export class Fly {
       : (1 + 0.03 * Math.sin(this.time * 3.0));
     this.model.abdomen.scale.set(0.9, 1.5, 0.75 * breathe);
     this.syncNode();
+    this.model.onUpdate?.(this, dt);
+    this.visualScare = false;
   }
 
   setState(s) {

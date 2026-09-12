@@ -6,9 +6,12 @@ import { resetRandom } from './random.js';
 import { loadBrainData } from '../src/data.js';
 import { LIFSim, makeSignals } from '../src/sim.js';
 import { SignalBuilder } from '../src/signals.js';
-import { Fly, FLY_SCALE, WANDER_JITTER } from '../src/flymodel.js';
+import { Fly, FLY_SCALE, WANDER_JITTER, BODY_FORM } from '../src/flymodel.js';
 import { circadianActivity, makeLedge } from '../src/environment.js';
 import { rnd, lag, TUNED_HZ } from '../src/util.js';
+
+const targetForm = process.argv.includes('--fly') ? 'fly' : 'tinyCRT';
+BODY_FORM.current = targetForm;
 
 const data = loadBrainData();
 if (!data) { process.stderr.write('no data/ — run etl.py first\n'); process.exit(1); }

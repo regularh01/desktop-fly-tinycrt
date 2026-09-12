@@ -24,10 +24,10 @@ func evaluateLocomotor(_ circuit: LocomotorCircuitFile, forwardHz: Float = 40,
                        leftHz: Float = 0, rightHz: Float = 0,
                        backwardHz: Float = 0, onset: CGFloat = 0,
                        duration: CGFloat = 8, hz: CGFloat = 120,
+                       model: FlyModel = buildFlyModel(),
                        configure: ((LocomotorSim) -> Void)? = nil) -> LocomotorTrial {
     let cord = LocomotorSim(circuit: circuit)
     configure?(cord)
-    let model = buildFlyModel()
     let body = SixLegDynamics(geometries: model.legs.map(\.geometry))
     for side in ["left", "right"] {
         cord.setDescending("DNp09", side: side, rate: forwardHz)
@@ -92,6 +92,53 @@ func runLocomotorTests() -> Bool {
         print("\(ok ? "PASS" : "FAIL") \(name): \(detail)")
         if !ok { failures += 1 }
     }
+    
+    // 1. Tiny CRT Leg Geometry Verification
+    let flyM = buildFlyModel()
+    let crtM = buildTinyCRTModel()
+    var geomMatch = (flyM.legs.count == crtM.legs.count && flyM.legs.count == 6)
+    if geomMatch {
+        for i in 0..<flyM.legs.count {
+            let g1 = flyM.legs[i].geometry
+            let g2 = crtM.legs[i].geometry
+            if abs(g1.attachX - g2.attachX) > 1e-6 ||
+               abs(g1.attachY - g2.attachY) > 1e-6 ||
+               abs(g1.attachZ - g2.attachZ) > 1e-6 ||
+               abs(g1.baseYaw - g2.baseYaw) > 1e-6 ||
+               abs(g1.side - g2.side) > 1e-6 ||
+               abs(g1.femur - g2.femur) > 1e-6 ||
+               abs(g1.tibia - g2.tibia) > 1e-6 ||
+               abs(g1.tarsus - g2.tarsus) > 1e-6 {
+                geomMatch = false
+                break
+            }
+        }
+    }
+    check("TinyCRT leg geometry exactly matches fly model", geomMatch,
+          "all 6 kinematic specs and symmetry transform match")
+          
+    // 2. Tiny CRT Locomotor Mechanics Equivalence across Straight, Turn, Backward, Rest
+    func compareScenarios(_ name: String, forwardHz: Float, leftHz: Float, rightHz: Float, backwardHz: Float, onset: CGFloat) -> Bool {
+        TestRandom.reset("locomotor_cmp_\(name)")
+        let f = evaluateLocomotor(data.locomotor, forwardHz: forwardHz, leftHz: leftHz, rightHz: rightHz, backwardHz: backwardHz, onset: onset, model: buildFlyModel())
+        TestRandom.reset("locomotor_cmp_\(name)")
+        let c = evaluateLocomotor(data.locomotor, forwardHz: forwardHz, leftHz: leftHz, rightHz: rightHz, backwardHz: backwardHz, onset: onset, model: buildTinyCRTModel())
+        return abs(f.forward - c.forward) < 1e-6 &&
+               abs(f.lateYaw - c.lateYaw) < 1e-6 &&
+               abs(f.lateForward - c.lateForward) < 1e-6 &&
+               f.contacts == c.contacts &&
+               f.motorSpikes == c.motorSpikes
+    }
+    let straightMatch = compareScenarios("straight", forwardHz: 40, leftHz: 0, rightHz: 0, backwardHz: 0, onset: 0)
+    let leftTurnMatch = compareScenarios("left_turn", forwardHz: 30, leftHz: 70, rightHz: 0, backwardHz: 0, onset: 3)
+    let rightTurnMatch = compareScenarios("right_turn", forwardHz: 30, leftHz: 0, rightHz: 70, backwardHz: 0, onset: 3)
+    let backwardMatch = compareScenarios("backward", forwardHz: 0, leftHz: 0, rightHz: 0, backwardHz: 70, onset: 0)
+    let restMatch = compareScenarios("rest", forwardHz: 0, leftHz: 0, rightHz: 0, backwardHz: 0, onset: 0)
+    let fullMatch = straightMatch && leftTurnMatch && rightTurnMatch && backwardMatch && restMatch
+    check("Fly and TinyCRT produce identical kinematics across all scenarios", fullMatch,
+          "straight=\(straightMatch), left=\(leftTurnMatch), right=\(rightTurnMatch), backward=\(backwardMatch), rest=\(restMatch)")
+    
+    TestRandom.reset("locomotortest")
     let rest = evaluateLocomotor(data.locomotor, forwardHz: 0, duration: 4) { $0.feedbackEnabled = false }
     check("MaleCNS quiet without descending or sensory drive", rest.motorSpikes == 0 && rest.lateDistance < 0.001,
           "motor spikes \(rest.motorSpikes), drift \(rest.lateDistance)")

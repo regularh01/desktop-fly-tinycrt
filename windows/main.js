@@ -28,6 +28,7 @@ let brain = null;
 let tray = null;
 let desktop = null;          // union of every display, in DIP
 let paused = false;
+let currentSkin = 'tinyCRT';
 let brainVisible = true;
 let mouseTimer = null;
 let windowTimer = null;
@@ -200,6 +201,14 @@ function buildTrayMenu() {
     { label: 'Add Fly', click: () => send(overlay, 'cmd', { name: 'addFly' }) },
     { label: 'Remove Fly', click: () => send(overlay, 'cmd', { name: 'removeFly' }) },
     { label: 'Scare Flies', click: () => send(overlay, 'cmd', { name: 'scareAll' }) },
+    {
+      label: currentSkin === 'tinyCRT' ? 'Skin: Tiny CRT (Click for Fly)' : 'Skin: Fruit Fly (Click for CRT)',
+      click: () => {
+        currentSkin = currentSkin === 'tinyCRT' ? 'fly' : 'tinyCRT';
+        send(overlay, 'cmd', { name: 'toggleBody' });
+        refreshTray();
+      },
+    },
     { type: 'separator' },
     { label: 'Quit', click: () => { app.isQuitting = true; app.quit(); } },
   ]);
